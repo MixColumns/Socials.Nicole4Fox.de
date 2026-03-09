@@ -1,0 +1,43 @@
+name: Deploy Socials.Nicole4Fox.de
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history to get commit hash
+
+    - name: Replace build information in index.html
+      run: |
+        # Get build date in CET timezone (format: YYYY-MM-DD HH:MM:SS CET)
+        BUILD_DATE=$(TZ='Europe/Berlin' date '+%Y-%m-%d %H:%M:%S CET')
+        
+        # Get git ref (e.g., refs/heads/main)
+        GIT_REF=$(git symbolic-ref HEAD 2>/dev/null || echo "refs/heads/$(git rev-parse --abbrev-ref HEAD)")
+        
+        # Get short commit hash (first 7 characters)
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        
+        # Replace placeholders in index.html (using | delimiter to avoid conflicts with slashes in GIT_REF)
+        sed -i "s|Built: -|Built: $BUILD_DATE|g" index.html
+        sed -i "s|Ref: -|Ref: $GIT_REF|g" index.html
+        sed -i "s|Commit: -|Commit: $COMMIT_HASH|g" index.html
+
+    - name: Copy site to VServer via SSH
+      uses: burnett01/rsync-deployments@7.1.0
+      with:
+        switches: -avz --delete --rsync-path="rsync" --exclude='.git' --exclude='.github'
+        path: "./"
+        remote_path: ${{ secrets.TARGET }}
+        remote_host: ${{ secrets.SERVER_IP }}
+        remote_user: ${{ secrets.SERVER_USER }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+        remote_port: ${{ secrets.SSH_PORT }}

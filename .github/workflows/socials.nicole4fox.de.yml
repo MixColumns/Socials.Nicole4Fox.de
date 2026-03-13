@@ -28,7 +28,7 @@ jobs:
         
         # Replace placeholders in index.html (using | delimiter to avoid conflicts with slashes in GIT_REF)
         sed -i "s|Built: -|Built: $BUILD_DATE|g" index.html
-        sed -i "s|Ref: -|Ref: $GIT_REF|g" index.html
+        #sed -i "s|Ref: -|Ref: $GIT_REF|g" index.html
         sed -i "s|Commit: -|Commit: <a href="https://github.com/MixColumns/Socials.Nicole4Fox.de" target="_blank">$COMMIT_HASH</a>|g" index.html
 
     - name: Copy site to VServer via SSH
